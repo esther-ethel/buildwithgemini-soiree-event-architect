@@ -101,6 +101,15 @@ The frontend features a strict 2-color Olive Green (`#2b3327`) & Cream (`#f7f4ea
 
 ---
 
+### 5. Prompt Test 4 — Custom Cake & Decor Asset Generation
+> **Prompt**: *"Generate a bespoke tiered cake and decor image for a Vintage Masquerade celebration."*
+
+**Functionality Demonstrated**: In-chat visual asset generation using `generate_celebration_image`, direct GCS bucket hosting, and A2UI card image display.
+
+![Cake & Decor Generation Screenshot](docs/screenshots/cake_decor_generation.png)
+
+---
+
 ## 🗄 Databases Used & Data Retrieval/Storage
 
 Soirée uses **Google Cloud Firestore** (`qwiklabs-gcp-02-5a2a6d61edf4`) for structured event persistence.
