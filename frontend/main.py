@@ -121,6 +121,21 @@ def _extract_parts(parts: list) -> list[dict]:
             text = root.text
             if "Cannot add session to memory" in text:
                 continue
+            # Handle case where model emits raw A2UI JSON in a text part
+            stripped_text = text.strip()
+            if (stripped_text.startswith("[") or stripped_text.startswith("{")) and ("beginRendering" in stripped_text or "surfaceUpdate" in stripped_text):
+                try:
+                    import json
+                    parsed = json.loads(stripped_text)
+                    if isinstance(parsed, list):
+                        for item in parsed:
+                            out.append({"kind": "a2ui", "data": item})
+                        continue
+                    elif isinstance(parsed, dict) and any(k in parsed for k in ("beginRendering", "surfaceUpdate", "dataModelUpdate")):
+                        out.append({"kind": "a2ui", "data": parsed})
+                        continue
+                except Exception:
+                    pass
             out.append({"kind": "text", "text": text})
         elif getattr(root, "data", None) is not None:
             meta = getattr(root, "metadata", None) or {}
