@@ -58,6 +58,7 @@ def get_current_time(query: str) -> str:
 from .tools import (
     add_guest_rsvp,
     calculate_event_expenses,
+    curate_playlist,
     generate_celebration_image,
     generate_celebration_video_clip,
     generate_digital_invitation,
@@ -132,7 +133,8 @@ a2ui_instruction = schema_manager.generate_system_prompt(
         "Use ONLY these components: Card, Column, Row, Text, and Image. Do not use "
         "Table or Heading (unsupported), or Buttons, actions, or forms (they do "
         "nothing in adk web). "
-        "IMAGE GENERATION DIRECTIVE: Whenever the user requests decor ideas, cake designs, theme previews, or visual elements, ALWAYS call the `generate_celebration_image` tool with a rich, detailed visual prompt to generate a photorealistic Imagen 3 celebration image and obtain a public GCS URL. Include the public URL in your A2UI Image component or Markdown output. "
+        "IMAGE GENERATION DIRECTIVE: Whenever the user requests decor ideas, cake designs, theme previews, moodboards, or visual elements, ALWAYS generate a photorealistic Imagen 3 celebration image and obtain a public GCS URL. Include the public URL in your A2UI Image component or Markdown output. "
+        "MUSIC & PLAYLIST DIRECTIVE: You are fully capable of curating event music playlists. When requested, invoke `curate_playlist` and provide a detailed 10-song tracklist including song titles, artists, genres, tempos, and mood transitions across event phases (Arrivals, Dinner, Dancing). "
         "Never point an Image at a bare filename, an artifact name, or a non-http(s) path. If you do "
         "not have a public URL, add a short Text line noting the image instead. "
         "No markdown in text; use the usageHint property ('h1', 'h2', 'body') for "
@@ -167,6 +169,7 @@ root_agent = Agent(
         add_guest_rsvp,
         get_theme_catalog_item,
         calculate_event_expenses,
+        curate_playlist,
         generate_digital_invitation,
         generate_theme_image_asset,
         search_cocktail_recipes,
