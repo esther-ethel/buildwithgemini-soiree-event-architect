@@ -47,6 +47,32 @@ def get_event_details(event_id: str) -> dict:
     return {"error": f"Event '{event_id}' not found in Firestore."}
 
 
+def list_events(limit: int = 20) -> dict:
+    """Lists all scheduled upcoming events and their theme details from Firestore.
+
+    Args:
+        limit: Maximum number of events to retrieve (default: 20).
+
+    Returns:
+        Dict containing a list of events with event_id, name, theme, guest_count, status, dress_code, and budget_total.
+    """
+    db = _get_firestore_client()
+    docs = db.collection("events").limit(limit).stream()
+    events = []
+    for doc in docs:
+        d = doc.to_dict()
+        events.append({
+            "event_id": doc.id,
+            "name": d.get("name", "Unnamed Event"),
+            "theme": d.get("theme", "N/A"),
+            "guest_count": d.get("guest_count", 0),
+            "status": d.get("status", "Planning"),
+            "dress_code": d.get("dress_code", "N/A"),
+            "budget_total": d.get("budget_total", 0.0),
+        })
+    return {"events": events, "count": len(events)}
+
+
 def save_event_details(
     event_id: str,
     name: str,

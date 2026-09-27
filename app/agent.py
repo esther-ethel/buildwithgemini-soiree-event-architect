@@ -64,6 +64,7 @@ from .tools import (
     generate_theme_image_asset,
     get_event_details,
     get_theme_catalog_item,
+    list_events,
     save_event_details,
     search_cocktail_recipes,
 )
@@ -161,6 +162,7 @@ root_agent = Agent(
         get_weather,
         get_current_time,
         get_event_details,
+        list_events,
         save_event_details,
         add_guest_rsvp,
         get_theme_catalog_item,
