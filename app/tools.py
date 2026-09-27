@@ -378,21 +378,19 @@ def generate_digital_invitation(
     }
 
 
-async def generate_theme_image_asset(
+def generate_theme_image_asset(
     title: str,
     theme: str,
     asset_type: str = "decor_moodboard",
     color_palette: str = "Deep Crimson, Gold, and Emerald",
-    tool_context: ToolContext = None,
 ) -> dict:
-    """Generates a photorealistic theme visual card asset (cake preview, moodboard, cocktail card) using Imagen 3 and uploads to public Cloud Storage.
+    """Generates a photorealistic theme visual asset (cake preview, moodboard, cocktail card) using Gemini image generation and uploads to public Cloud Storage.
 
     Args:
         title: Title of the asset (e.g., 'Wildberry Chantilly Cake', 'Gothic Decor Moodboard').
         theme: Aesthetic theme (e.g., 'Berries', 'Vintage Masquerade').
         asset_type: 'cake_preview', 'decor_moodboard', 'cocktail_card', or 'favor_card'.
         color_palette: Color palette specification.
-        tool_context: ADK ToolContext instance provided automatically.
 
     Returns:
         Dict containing asset title, type, and live public HTTPS image URL.
@@ -402,17 +400,53 @@ async def generate_theme_image_asset(
         f"for a {theme} party theme titled '{title}', featuring an elegant setup "
         f"in {color_palette} color palette, detailed architectural lighting and professional styling."
     )
-    result = await generate_celebration_image(prompt, tool_context=tool_context)
-    if "public_url" in result:
-        return {
-            "title": title,
-            "theme": theme,
-            "asset_type": asset_type,
-            "image_url": result["public_url"],
-            "status": "generated",
-            "message": f"Photorealistic Imagen 3 moodboard asset '{title}' generated successfully.",
-        }
     
+    try:
+        client = genai.Client(
+            vertexai=True, project=FIRESTORE_PROJECT_ID, location="global"
+        )
+        response = client.models.generate_content(
+            model="gemini-3.1-flash-lite-image",
+            contents=prompt,
+        )
+
+        image_bytes = None
+        mime_type = "image/png"
+
+        if (
+            response.candidates
+            and response.candidates[0].content
+            and response.candidates[0].content.parts
+        ):
+            for part in response.candidates[0].content.parts:
+                if part.inline_data and part.inline_data.data:
+                    image_bytes = part.inline_data.data
+                    if part.inline_data.mime_type:
+                        mime_type = part.inline_data.mime_type
+                    break
+
+        if image_bytes:
+            ext = "jpg" if "jpeg" in mime_type else "png"
+            filename = f"asset_{uuid.uuid4().hex[:8]}.{ext}"
+
+            storage_client = storage.Client(project=FIRESTORE_PROJECT_ID)
+            bucket = storage_client.bucket(GCS_BUCKET_NAME)
+            blob_name = f"generated_images/{filename}"
+            blob = bucket.blob(blob_name)
+            blob.upload_from_string(image_bytes, content_type=mime_type)
+
+            public_url = f"https://storage.googleapis.com/{GCS_BUCKET_NAME}/{blob_name}"
+            return {
+                "title": title,
+                "theme": theme,
+                "asset_type": asset_type,
+                "image_url": public_url,
+                "status": "generated",
+                "message": f"Photorealistic Imagen 3 moodboard asset '{title}' generated successfully.",
+            }
+    except Exception as e:
+        print(f"Warning: generate_theme_image_asset failed to generate image: {e}")
+
     # Fallback if image generation fails
     clean_title = re.sub(r"[^\w\-]", "_", title.lower())
     blob_name = f"assets/{asset_type}_{clean_title}.svg"
@@ -441,6 +475,7 @@ async def generate_theme_image_asset(
         "status": "generated",
         "message": f"Asset '{title}' generated and stored in Cloud Storage.",
     }
+
 
 
 def curate_playlist(
