@@ -1,0 +1,10 @@
+.git
+.gitignore
+docs/
+frontend/
+node_modules/
+tests/
+.adk/
+*.png
+*.jpg
+*.webm
